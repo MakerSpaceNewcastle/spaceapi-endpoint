@@ -88,12 +88,22 @@ async fn main() {
         .add_project("https://github.com/MakerSpaceNewcastle")
         .state(State {
             open: Some(false),
-            ..State::default()
+            ..Default::default()
         })
         .build()
         .expect("basic space status should be created");
 
     let status = status::SpaceStatus::new(status, mqtt_client);
+
+    status.add_mutator(status::Mutator {
+        mutation: status::Mutation::StateOpen,
+        topic: "makerspace/state/open".into(),
+    });
+
+    status.add_mutator(status::Mutator {
+        mutation: status::Mutation::StateMessage,
+        topic: "makerspace/state/message".into(),
+    });
 
     status.add_temperature_sensor(
         "Main Space",

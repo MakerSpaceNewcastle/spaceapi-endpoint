@@ -174,6 +174,8 @@ impl Mutator {
 pub(crate) enum Mutation {
     TemperatureSensorValue(String),
     HumiditySensorValue(String),
+    StateOpen,
+    StateMessage,
 }
 
 impl Mutation {
@@ -193,10 +195,10 @@ impl Mutation {
                             None => false,
                             Some(n) => n == name,
                         }) {
-                        Some(mut sensor) => match str::parse(&msg.payload_str()) {
+                        Some(mut sensor) => match msg.payload_str().parse() {
                             Ok(v) => {
-                                sensor.value = v;
                                 info!("Set sensor value to {}", v);
+                                sensor.value = v;
                             }
                             Err(e) => {
                                 warn!("Failed to parse string as value ({})", e);
@@ -221,10 +223,10 @@ impl Mutation {
                             None => false,
                             Some(n) => n == name,
                         }) {
-                        Some(mut sensor) => match str::parse(&msg.payload_str()) {
+                        Some(mut sensor) => match msg.payload_str().parse() {
                             Ok(v) => {
-                                sensor.value = v;
                                 info!("Set sensor value to {}", v);
+                                sensor.value = v;
                             }
                             Err(e) => {
                                 warn!("Failed to parse string as value ({})", e);
@@ -235,6 +237,28 @@ impl Mutation {
                         }
                     }
                 }
+            }
+            Mutation::StateOpen => {
+                debug!("Updating state open");
+                match msg.payload_str().parse() {
+                    Ok(open) => {
+                        info!("Set state.open to {}", open);
+                        status.state.as_mut().unwrap().open = Some(open);
+                    }
+                    Err(e) => {
+                        warn!("Failed to parse string as value ({})", e);
+                    }
+                }
+            }
+            Mutation::StateMessage => {
+                debug!("Updating state message");
+                let msg = if msg.payload_str().len() == 0 {
+                    None
+                } else {
+                    Some(msg.payload_str().to_string())
+                };
+                info!("Set state message to {:?}", msg);
+                status.state.as_mut().unwrap().message = msg;
             }
         }
     }
