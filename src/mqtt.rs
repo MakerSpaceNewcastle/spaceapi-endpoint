@@ -20,7 +20,7 @@ pub(crate) async fn create_client(broker: url::Url, password: &str) -> mqtt_chan
                 .clean_session(true)
                 .automatic_reconnect(Duration::from_secs(1), Duration::from_secs(5))
                 .keep_alive_interval(Duration::from_secs(5))
-                .user_name("dan")
+                .user_name("spaceapi")
                 .password(password)
                 .finalize(),
         )
