@@ -98,78 +98,78 @@ async fn main() {
     status.add_temperature_sensor(
         "Main Space",
         "Ground Floor - Main Space",
-        "West wall under windows",
+        Some("West wall under windows"),
         "makerspace/sensors/10/temperature",
     );
     status.add_humidity_sensor(
         "Main Space",
         "Ground Floor - Main Space",
-        "West wall under windows",
+        Some("West wall under windows"),
         "makerspace/sensors/10/humidity",
     );
 
     status.add_temperature_sensor(
         "Workbee",
         "Basement - Near Workbee CNC",
-        "",
+        None,
         "makerspace/sensors/11/temperature",
     );
     status.add_humidity_sensor(
         "Workbee",
         "Basement - Near Workbee CNC",
-        "",
+        None,
         "makerspace/sensors/11/humidity",
     );
 
     status.add_temperature_sensor(
         "Opposite Workbee",
         "Basement - Opposite Wall to Workbee CNC",
-        "",
+        None,
         "makerspace/sensors/12/temperature",
     );
     status.add_humidity_sensor(
         "Opposite Workbee",
         "Basement - Opposite Wall to Workbee CNC",
-        "",
+        None,
         "makerspace/sensors/12/humidity",
     );
 
     status.add_temperature_sensor(
         "Bandsaw",
         "Basement - Near Bandsaw",
-        "",
+        None,
         "makerspace/sensors/13/temperature",
     );
     status.add_humidity_sensor(
         "Bandsaw",
         "Basement - Near Bandsaw",
-        "",
+        None,
         "makerspace/sensors/13/humidity",
     );
 
     status.add_temperature_sensor(
         "Wood Store",
         "Basement - Near Wood Store",
-        "",
+        None,
         "makerspace/sensors/14/temperature",
     );
     status.add_humidity_sensor(
         "Wood Store",
         "Basement - Near Wood Store",
-        "",
+        None,
         "makerspace/sensors/14/humidity",
     );
 
     status.add_temperature_sensor(
         "Old Barrel Drop",
         "Basement - Inside Old Barrel Drop",
-        "",
+        None,
         "makerspace/sensors/15/temperature",
     );
     status.add_humidity_sensor(
         "Old Barrel Drop",
         "Basement - Inside Old Barrel Drop",
-        "",
+        None,
         "makerspace/sensors/15/humidity",
     );
 

@@ -92,7 +92,7 @@ impl SpaceStatus {
         &self,
         name: &str,
         location: &str,
-        description: &str,
+        description: Option<&str>,
         topic: &str,
     ) {
         self.ensure_sensors_struct();
@@ -104,7 +104,7 @@ impl SpaceStatus {
                     metadata: spaceapi::sensors::SensorMetadataWithLocation {
                         name: Some(name.into()),
                         location: location.into(),
-                        description: Some(description.into()),
+                        description: description.map(|d| d.into()),
                     },
                     unit: "°C".into(),
                     ..Default::default()
@@ -125,7 +125,7 @@ impl SpaceStatus {
         &self,
         name: &str,
         location: &str,
-        description: &str,
+        description: Option<&str>,
         topic: &str,
     ) {
         self.ensure_sensors_struct();
@@ -137,7 +137,7 @@ impl SpaceStatus {
                     metadata: spaceapi::sensors::SensorMetadataWithLocation {
                         name: Some(name.into()),
                         location: location.into(),
-                        description: Some(description.into()),
+                        description: description.map(|d| d.into()),
                     },
                     unit: "%".into(),
                     ..Default::default()
