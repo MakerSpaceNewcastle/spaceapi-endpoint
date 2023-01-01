@@ -1,6 +1,9 @@
 use axum::Json;
 use spaceapi::Status;
-use std::sync::{Arc, Mutex};
+use std::{
+    sync::{Arc, Mutex},
+    time::Duration,
+};
 use tokio::task::JoinHandle;
 use tracing::{debug, info, warn};
 
@@ -26,15 +29,31 @@ impl SpaceStatus {
         let mqtt_update_task = {
             let client = mqtt_client.clone();
             let state = state.clone();
+
             Arc::new(Mutex::new(tokio::spawn(async move {
+                let mut interval = tokio::time::interval(Duration::from_secs(5));
                 let mut rx = client.rx_channel();
+
+                let mut last_status = state.lock().unwrap().status.clone();
+
                 loop {
-                    while let Ok(mqtt_channel_client::Event::Rx(msg)) = rx.recv().await {
-                        debug!("New MQTT message");
-                        let mut state = state.lock().unwrap();
-                        let mutators = state.mutators.clone();
-                        for m in mutators {
-                            m.handle_mqtt_message(&mut state.status, &msg);
+                    tokio::select! {
+                        _ = interval.tick() => {
+                            debug!("Checking for status changes");
+                            let status = state.lock().unwrap().status.clone();
+                            if status != last_status {
+                                info!("New status found, sending via MQTT");
+                                crate::mqtt::send_status(&client, &status).await;
+                                last_status = status;
+                            }
+                        }
+                        Ok(mqtt_channel_client::Event::Rx(msg)) = rx.recv() => {
+                            debug!("New MQTT message");
+                            let mut state = state.lock().unwrap();
+                            let mutators = state.mutators.clone();
+                            for m in mutators {
+                                m.handle_mqtt_message(&mut state.status, &msg);
+                            }
                         }
                     }
                 }

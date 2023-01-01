@@ -29,3 +29,13 @@ pub(crate) async fn create_client(broker: url::Url, password: &str) -> mqtt_chan
 
     mqtt_client
 }
+
+#[tracing::instrument(skip_all)]
+pub(crate) async fn send_status(client: &mqtt_channel_client::Client, status: &spaceapi::Status) {
+    let payload = serde_json::to_string(status).unwrap();
+    let msg = paho_mqtt::MessageBuilder::new()
+        .topic("makerspace/spaceapi")
+        .payload(payload)
+        .finalize();
+    client.send(msg).unwrap();
+}
