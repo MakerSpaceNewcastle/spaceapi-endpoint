@@ -7,11 +7,9 @@ edition = "2021"
 anyhow = "1.0"
 axum = "0.6.1"
 clap = { version = "4.0", features = ["derive", "env"] }
-kagiyama = "0.2.0"
+kagiyama = "0.3.0"
 lazy_static = "1.4.0"
-mqtt-channel-client = { version = "0.4.0", features = ["metrics"] }
-paho-mqtt = "0.11"
-prometheus-client = "0.19"
+mqtt-channel-client = { version = "0.5.0", features = ["metrics"] }
 serde_json = "1.0"
 # spaceapi = "0.8.1"
 spaceapi = { git = "https://github.com/spaceapi-community/spaceapi-rs.git" }

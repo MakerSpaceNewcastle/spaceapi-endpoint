@@ -1,3 +1,4 @@
+use mqtt_channel_client::paho_mqtt;
 use std::time::Duration;
 use tracing::info;
 

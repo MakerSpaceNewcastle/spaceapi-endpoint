@@ -1,8 +1,9 @@
-use lazy_static::lazy_static;
-use prometheus_client::{
+use kagiyama::prometheus as prometheus_client;
+use kagiyama::prometheus::{
     encoding::{EncodeLabelSet, EncodeLabelValue},
     metrics::{counter::Counter, family::Family},
 };
+use lazy_static::lazy_static;
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq, EncodeLabelSet)]
 pub(crate) struct RequestLabels {
