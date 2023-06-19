@@ -40,3 +40,16 @@ pub(crate) async fn send_status(client: &mqtt_channel_client::Client, status: &s
         .finalize();
     client.send(msg).unwrap();
 }
+
+#[tracing::instrument(skip_all)]
+pub(crate) async fn send_status_state(
+    client: &mqtt_channel_client::Client,
+    status: &spaceapi::Status,
+) {
+    let payload = serde_json::to_string(status.state.as_ref().unwrap()).unwrap();
+    let msg = paho_mqtt::MessageBuilder::new()
+        .topic("makerspace/spaceapi/state")
+        .payload(payload)
+        .finalize();
+    client.send(msg).unwrap();
+}
