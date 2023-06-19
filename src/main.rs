@@ -1,6 +1,7 @@
 mod metrics;
 mod mqtt;
 mod status;
+mod utils;
 
 use axum::{routing::get, Router};
 use clap::Parser;
@@ -183,7 +184,18 @@ async fn main() {
         "makerspace/sensors/15/humidity",
     );
 
-    let app = Router::new().route("/", get(move || async move { status.http_get() }));
+    let app = Router::new()
+        .route(
+            "/",
+            get({
+                let status = status.clone();
+                move || async move { status.http_get() }
+            }),
+        )
+        .route(
+            "/shield",
+            get(move || async move { status.http_get_shield() }),
+        );
 
     watcher.start_server(args.observability_address).await;
 

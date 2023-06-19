@@ -18,6 +18,7 @@ impl RequestLabels {
 #[derive(Debug, Clone, Eq, Hash, PartialEq, EncodeLabelValue)]
 pub(crate) enum Endpoint {
     SpaceApi,
+    OpenShield,
 }
 
 lazy_static! {

@@ -1,4 +1,5 @@
-use axum::Json;
+use crate::utils::shieldsio_static_sanitise;
+use axum::{response::Redirect, Json};
 use spaceapi::Status;
 use std::{
     sync::{Arc, Mutex},
@@ -93,6 +94,44 @@ impl SpaceStatus {
             ))
             .inc();
         Json(self.get())
+    }
+
+    #[tracing::instrument(skip(self))]
+    pub(crate) fn http_get_shield(&self) -> Redirect {
+        crate::metrics::REQUESTS
+            .get_or_create(&crate::metrics::RequestLabels::new(
+                crate::metrics::Endpoint::OpenShield,
+            ))
+            .inc();
+
+        let status = self.get();
+        let state = status.state.unwrap();
+        let members_only = state.message == Some("members only".to_string());
+
+        let space_name = shieldsio_static_sanitise(status.space);
+
+        let msg = shieldsio_static_sanitise(if state.open.unwrap() {
+            match state.message {
+                Some(msg) => format!("Open ({})", msg),
+                None => "Open".to_string(),
+            }
+        } else {
+            "Closed".to_string()
+        });
+
+        let colour = if state.open.unwrap() {
+            if members_only {
+                "blue"
+            } else {
+                "green"
+            }
+        } else {
+            "red"
+        };
+
+        Redirect::to(&format!(
+            "https://img.shields.io/badge/{space_name}-{msg}-{colour}"
+        ))
     }
 }
 
