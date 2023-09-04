@@ -15,26 +15,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
-
-      - name: Setup
-        run: rustup component add clippy rustfmt
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v20
 
       - name: Format
-        run: cargo fmt -- --check
+        run: |
+          eval "$(nix print-dev-env)"
+          cargo fmt -- --check
 
       - name: Clippy
-        run: cargo clippy -- -Dwarnings
+        run: |
+          eval "$(nix print-dev-env)"
+          cargo clippy -- -Dwarnings
 
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
+      - uses: cachix/install-nix-action@v20
 
       - name: Build and Test
         run: |
+          eval "$(nix print-dev-env)"
           cargo build --all-targets
           cargo test --all-targets
 
@@ -47,7 +51,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Derive tags
         run: |
