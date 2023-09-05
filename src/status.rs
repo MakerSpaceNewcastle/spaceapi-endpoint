@@ -263,7 +263,7 @@ impl Mutation {
                             None => false,
                             Some(n) => n == name,
                         }) {
-                        Some(mut sensor) => match msg.payload_str().parse() {
+                        Some(sensor) => match msg.payload_str().parse() {
                             Ok(v) => {
                                 info!("Set sensor value to {}", v);
                                 sensor.value = v;
@@ -291,7 +291,7 @@ impl Mutation {
                             None => false,
                             Some(n) => n == name,
                         }) {
-                        Some(mut sensor) => match msg.payload_str().parse() {
+                        Some(sensor) => match msg.payload_str().parse() {
                             Ok(v) => {
                                 info!("Set sensor value to {}", v);
                                 sensor.value = v;
