@@ -40,7 +40,9 @@
     },
     "naersk": {
       "inputs": {
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": [
+          "nixpkgs"
+        ]
       },
       "locked": {
         "lastModified": 1694081375,
@@ -58,28 +60,17 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1693771906,
-        "narHash": "sha256-32EnPCaVjOiEERZ+o/2Ir7JH9pkfwJZJ27SKHNvt4yk=",
-        "path": "/nix/store/p9pbggajq6ykf2jdgsl33rw081mj68z4-source",
-        "rev": "da5adce0ffaff10f6d0fee72a02a5ed9d01b52fc",
-        "type": "path"
+        "lastModified": 1695814055,
+        "narHash": "sha256-JMR6RXv0zQWX8DW7FhojpZaobMc7l3IUgvZV6Ar3E/E=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "3c969a76e912fdcbaf0923b553f362974affd9fa",
+        "type": "github"
       },
       "original": {
-        "id": "nixpkgs",
-        "type": "indirect"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1693771906,
-        "narHash": "sha256-32EnPCaVjOiEERZ+o/2Ir7JH9pkfwJZJ27SKHNvt4yk=",
-        "path": "/nix/store/p9pbggajq6ykf2jdgsl33rw081mj68z4-source",
-        "rev": "da5adce0ffaff10f6d0fee72a02a5ed9d01b52fc",
-        "type": "path"
-      },
-      "original": {
-        "id": "nixpkgs",
-        "type": "indirect"
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "type": "github"
       }
     },
     "root": {
@@ -87,7 +78,7 @@
         "fenix": "fenix",
         "flake-utils": "flake-utils",
         "naersk": "naersk",
-        "nixpkgs": "nixpkgs_2"
+        "nixpkgs": "nixpkgs"
       }
     },
     "rust-analyzer-src": {
