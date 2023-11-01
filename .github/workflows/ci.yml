@@ -13,11 +13,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v20
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v22
 
       - name: Format
-        run: nix build -L .#fmt
+        run: nix develop --command treefmt --fail-on-change
 
       - name: Clippy
         run: nix build -L .#clippy
@@ -32,8 +32,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
-      - uses: cachix/install-nix-action@v20
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v22
 
       - name: Build
         run: nix build -L
