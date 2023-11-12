@@ -1,24 +1,25 @@
+mod makerspace;
 mod metrics;
 mod mqtt;
+mod mutators;
 mod status;
 mod utils;
 
 use axum::{routing::get, Router};
 use clap::Parser;
 use kagiyama::{AlwaysReady, Watcher};
-use spaceapi::{Contact, Link, Location, State, StatusBuilder};
-use tracing::info;
+use tokio::task::JoinSet;
+use tracing::{error, info};
+
+type Tasks = JoinSet<()>;
+type ShutdownSender = tokio::sync::broadcast::Sender<()>;
+type ShutdownReceiver = tokio::sync::broadcast::Receiver<()>;
 
 #[derive(Clone, Debug, Parser)]
 #[clap(author, version, about)]
 struct Cli {
     /// MQTT broker address
-    #[clap(
-        value_parser,
-        long,
-        env = "MQTT_BROKER",
-        default_value = "tcp://mqtt.makerspace.dan-nixon.com:1883"
-    )]
+    #[clap(value_parser, long, env = "MQTT_BROKER")]
     mqtt_broker: url::Url,
 
     /// MQTT password
@@ -57,151 +58,82 @@ async fn main() {
         let mut registry = watcher.metrics_registry();
         let registry = registry.sub_registry_with_prefix("spaceapi");
         mqtt_client.register_metrics(registry);
-        registry.register("requests", "SpaceAPI requests", metrics::REQUESTS.clone());
+        crate::metrics::register_metrics(registry)
     }
 
-    let status =
-        StatusBuilder::v14("Maker Space")
-        .logo("http://makerspace.pbworks.com/w/file/fetch/43988924/makerspace_logo.png")
-        .url("https://www.makerspace.org.uk/")
-        .location(Location {
-            address: Some("Maker Space, c/o Orbis Community, Ground Floor, 65 High Street, Gateshead, NE8 2AP".into()),
-            lat: 54.9652,
-            lon: -1.60233,
-            timezone: Some("Europe/London".into())
-        })
-        .contact(Contact {
-            matrix: Some("#makerspace-ncl:matrix.org".into()),
-            ml: Some("north-east-makers@googlegroups.com".into()),
-            twitter: Some("@maker_space".into()),
-            ..Default::default()
-        })
-        .add_link(Link {
-            name: "Maker Space Wiki".into(),
-            url: "http://makerspace.pbworks.com".into(),
-            ..Default::default()
-        })
-        .add_link(Link {
-            name: "North East Makers mailing list".into(),
-            url: "https://groups.google.com/g/north-east-makers".into(),
-            ..Default::default()
-        })
-        .add_project("https://github.com/MakerSpaceNewcastle")
-        .state(State {
-            open: Some(false),
-            ..Default::default()
-        })
-        .build()
-        .expect("basic space status should be created");
+    let mut tasks = Tasks::new();
+    let (shutdown, mut shutdown_rx) = tokio::sync::broadcast::channel(1);
 
-    let status = status::SpaceStatus::new(status, mqtt_client);
-
-    status.add_mutator(status::Mutator {
-        mutation: status::Mutation::StateOpen,
-        topic: "makerspace/state/open".into(),
-    });
-
-    status.add_mutator(status::Mutator {
-        mutation: status::Mutation::StateMessage,
-        topic: "makerspace/state/message".into(),
-    });
-
-    status.add_temperature_sensor(
-        "Main Space",
-        "Ground Floor - Main Space",
-        Some("West wall under windows"),
-        "makerspace/sensors/10/temperature",
-    );
-    status.add_humidity_sensor(
-        "Main Space",
-        "Ground Floor - Main Space",
-        Some("West wall under windows"),
-        "makerspace/sensors/10/humidity",
-    );
-
-    status.add_temperature_sensor(
-        "Workbee",
-        "Basement - Near Workbee CNC",
-        None,
-        "makerspace/sensors/11/temperature",
-    );
-    status.add_humidity_sensor(
-        "Workbee",
-        "Basement - Near Workbee CNC",
-        None,
-        "makerspace/sensors/11/humidity",
-    );
-
-    status.add_temperature_sensor(
-        "Opposite Workbee",
-        "Basement - Opposite Wall to Workbee CNC",
-        None,
-        "makerspace/sensors/12/temperature",
-    );
-    status.add_humidity_sensor(
-        "Opposite Workbee",
-        "Basement - Opposite Wall to Workbee CNC",
-        None,
-        "makerspace/sensors/12/humidity",
-    );
-
-    status.add_temperature_sensor(
-        "Bandsaw",
-        "Basement - Near Bandsaw",
-        None,
-        "makerspace/sensors/13/temperature",
-    );
-    status.add_humidity_sensor(
-        "Bandsaw",
-        "Basement - Near Bandsaw",
-        None,
-        "makerspace/sensors/13/humidity",
-    );
-
-    status.add_temperature_sensor(
-        "Wood Store",
-        "Basement - Near Wood Store",
-        None,
-        "makerspace/sensors/14/temperature",
-    );
-    status.add_humidity_sensor(
-        "Wood Store",
-        "Basement - Near Wood Store",
-        None,
-        "makerspace/sensors/14/humidity",
-    );
-
-    status.add_temperature_sensor(
-        "Old Barrel Drop",
-        "Basement - Inside Old Barrel Drop",
-        None,
-        "makerspace/sensors/15/temperature",
-    );
-    status.add_humidity_sensor(
-        "Old Barrel Drop",
-        "Basement - Inside Old Barrel Drop",
-        None,
-        "makerspace/sensors/15/humidity",
-    );
+    let status = crate::makerspace::build_status(&mut tasks, &shutdown, mqtt_client).await;
 
     let app = Router::new()
         .route(
             "/",
             get({
                 let status = status.clone();
-                move || async move { status.http_get() }
+                || async move { status.http_get().await }
+            }),
+        )
+        .route(
+            "/shield/simple",
+            get({
+                let status = status.clone();
+                || async move { status.http_get_shield_simple().await }
             }),
         )
         .route(
             "/shield",
-            get(move || async move { status.http_get_shield() }),
+            get({
+                let status = status.clone();
+                || async move { status.http_get_shield_full().await }
+            }),
         );
 
     watcher.start_server(args.observability_address).await;
 
     info!("Starting API server on {}", args.api_address);
-    axum::Server::bind(&args.api_address)
-        .serve(app.into_make_service())
+    tasks.spawn({
+        let mut shutdown_rx = shutdown.subscribe();
+        async move {
+            axum::Server::bind(&args.api_address)
+                .serve(app.into_make_service())
+                .with_graceful_shutdown(async move {
+                    let _ = shutdown_rx.recv().await;
+                })
+                .await
+                .expect("server should be started");
+        }
+    });
+
+    let shutdown_watch_handle = tokio::task::spawn({
+        let shutdown = shutdown.clone();
+        let shutdown_rx = shutdown.subscribe();
+        async move {
+            while let Some(res) = tasks.join_next().await {
+                info!("Task result = {res:?}");
+                match res {
+                    Ok(_) => {}
+                    Err(_) => {
+                        // If a shutdown has not been requested
+                        if shutdown_rx.is_empty() {
+                            error!("Task failed without shutdown being requested");
+                            shutdown.send(()).expect("shutdown signal should be sent");
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Wait for exit signal
+    tokio::select! {
+        _ = tokio::signal::ctrl_c() => {}
+        _ = shutdown_rx.recv() => {}
+    };
+
+    info!("Exiting");
+    shutdown.send(()).expect("shutdown signal should be sent");
+    shutdown_watch_handle
         .await
-        .expect("API server should be running");
+        .expect("shutdown watch task should exit cleanly");
 }

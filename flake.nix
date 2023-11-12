@@ -39,24 +39,30 @@
           rustc = toolchain.rust;
         };
 
-        cargo_toml = builtins.readFile ./Cargo.toml;
-        cargo = builtins.fromTOML cargo_toml;
+        cargo = builtins.fromTOML (builtins.readFile ./Cargo.toml);
         version = cargo.package.version;
 
         nativeBuildInputs = with pkgs; [cmake pkg-config];
         buildInputs = with pkgs; [openssl];
+
+        lintingRustFlags = "-D unused-crate-dependencies";
       in {
         devShell = pkgs.mkShell {
           nativeBuildInputs = nativeBuildInputs;
           buildInputs = buildInputs;
+
           packages = with pkgs; [
             toolchain.toolchain
 
+            # Code formatting tools
             alejandra
             treefmt
 
+            # Container image management tool
             skopeo
           ];
+
+          RUSTFLAGS = lintingRustFlags;
         };
 
         packages = rec {
@@ -95,25 +101,21 @@
             };
           };
 
-          fmt = naersk'.buildPackage {
-            src = ./.;
-            nativeBuildInputs = nativeBuildInputs;
-            buildInputs = buildInputs;
-            mode = "fmt";
-          };
-
           clippy = naersk'.buildPackage {
             src = ./.;
+            mode = "clippy";
+
             nativeBuildInputs = nativeBuildInputs;
             buildInputs = buildInputs;
-            mode = "clippy";
           };
 
           test = naersk'.buildPackage {
             src = ./.;
+            mode = "test";
+
             nativeBuildInputs = nativeBuildInputs;
             buildInputs = buildInputs;
-            mode = "test";
+
             # Ensure detailed test output appears in nix build log
             cargoTestOptions = x: x ++ ["1>&2"];
           };

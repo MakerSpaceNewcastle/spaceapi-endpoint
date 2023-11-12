@@ -16,11 +16,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v22
 
+      # Evaluate the devshell here so that the time reported for subsequent
+      # steps that use it reflect what is actually done there.
+      - name: Evaluate devShell
+        run: nix develop
+
       - name: Format
         run: nix develop --command treefmt --fail-on-change
 
       - name: Clippy
-        run: nix build -L .#clippy
+        run: nix develop --command cargo clippy --all-targets
 
       - name: Test
         run: nix build -L .#test
