@@ -1,5 +1,10 @@
-use crate::{mutators, utils::shieldsio_static_sanitise, ShutdownReceiver, Tasks};
-use axum::{response::Redirect, Json};
+use crate::{mutators, ShutdownReceiver, Tasks};
+use axum::{
+    http::header,
+    response::{IntoResponse, Response},
+    Json,
+};
+use badge_maker::BadgeBuilder;
 use spaceapi::Status;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -131,56 +136,51 @@ impl SpaceStatus {
     }
 
     #[tracing::instrument(skip(self))]
-    pub(crate) async fn http_get_shield_simple(&self) -> Redirect {
+    pub(crate) async fn http_get_shield_simple(&self) -> Response {
         crate::metrics::REQUESTS
             .get_or_create(&crate::metrics::RequestLabels::new(
                 crate::metrics::Endpoint::OpenShieldSimple,
             ))
             .inc();
 
-        let status = self.get().await;
-        let state = status.state.unwrap();
-
-        let msg = shieldsio_static_sanitise(
-            if state.open.unwrap() {
-                "Open"
-            } else {
-                "Closed"
-            }
-            .to_string(),
-        );
-
-        let colour = if state.open.unwrap() { "green" } else { "red" };
-
-        Redirect::to(&format!("https://img.shields.io/badge/-{msg}-{colour}"))
+        self.shield_status_common(BadgeBuilder::default()).await
     }
 
     #[tracing::instrument(skip(self))]
-    pub(crate) async fn http_get_shield_full(&self) -> Redirect {
+    pub(crate) async fn http_get_shield_full(&self) -> Response {
         crate::metrics::REQUESTS
             .get_or_create(&crate::metrics::RequestLabels::new(
                 crate::metrics::Endpoint::OpenShieldFull,
             ))
             .inc();
 
-        let status = self.get().await;
-        let state = status.state.unwrap();
+        let mut badge_builder = BadgeBuilder::default();
 
-        let space_name = shieldsio_static_sanitise(status.space);
+        let space = self.get().await.space;
+        badge_builder.label(&space);
 
-        let msg = shieldsio_static_sanitise(if state.open.unwrap() {
-            match state.message {
-                Some(msg) => format!("Open ({})", msg),
-                None => "Open".to_string(),
-            }
+        self.shield_status_common(badge_builder).await
+    }
+
+    async fn shield_status_common(&self, mut badge_builder: BadgeBuilder) -> Response {
+        let state = self.get().await.state.unwrap();
+        let open = state.open.unwrap();
+
+        if open {
+            badge_builder
+                .message(&match state.message {
+                    Some(msg) => format!("Open ({})", msg),
+                    None => "Open".to_string(),
+                })
+                .color(badge_maker::color::NamedColor::Green);
         } else {
-            "Closed".to_string()
-        });
+            badge_builder
+                .message("Closed")
+                .color(badge_maker::color::NamedColor::Red);
+        };
 
-        let colour = if state.open.unwrap() { "green" } else { "red" };
+        let badge = badge_builder.build().unwrap().svg();
 
-        Redirect::to(&format!(
-            "https://img.shields.io/badge/{space_name}-{msg}-{colour}"
-        ))
+        ([(header::CONTENT_TYPE, "image/svg+xml")], badge).into_response()
     }
 }
