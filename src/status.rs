@@ -136,10 +136,10 @@ impl SpaceStatus {
     }
 
     #[tracing::instrument(skip(self))]
-    pub(crate) async fn http_get_shield_simple(&self) -> Response {
+    pub(crate) async fn http_get_badge_simple(&self) -> Response {
         crate::metrics::REQUESTS
             .get_or_create(&crate::metrics::RequestLabels::new(
-                crate::metrics::Endpoint::OpenShieldSimple,
+                crate::metrics::Endpoint::OpenBadgeSimple,
             ))
             .inc();
 
@@ -147,10 +147,10 @@ impl SpaceStatus {
     }
 
     #[tracing::instrument(skip(self))]
-    pub(crate) async fn http_get_shield_full(&self) -> Response {
+    pub(crate) async fn http_get_badge_full(&self) -> Response {
         crate::metrics::REQUESTS
             .get_or_create(&crate::metrics::RequestLabels::new(
-                crate::metrics::Endpoint::OpenShieldFull,
+                crate::metrics::Endpoint::OpenBadgeFull,
             ))
             .inc();
 
