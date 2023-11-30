@@ -75,17 +75,17 @@ async fn main() {
             }),
         )
         .route(
-            "/shield/simple",
+            "/badge/simple",
             get({
                 let status = status.clone();
-                || async move { status.http_get_shield_simple().await }
+                || async move { status.http_get_badge_simple().await }
             }),
         )
         .route(
-            "/shield",
+            "/badge",
             get({
                 let status = status.clone();
-                || async move { status.http_get_shield_full().await }
+                || async move { status.http_get_badge_full().await }
             }),
         );
 
