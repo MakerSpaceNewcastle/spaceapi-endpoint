@@ -27,9 +27,6 @@ jobs:
       - name: Clippy
         run: nix develop --command cargo clippy --all-targets
 
-      - name: Test
-        run: nix build -L .#test
-
   build:
     name: Build
     needs:
@@ -41,13 +38,4 @@ jobs:
       - uses: cachix/install-nix-action@v22
 
       - name: Build
-        run: nix build -L
-
-      - name: Build and push container image
-        if: ${{ github.ref_name == 'main' }}
-        run: |
-          local_cr="docker-archive://$(nix build .#container-image --no-link --print-out-paths)"
-          remote_cr="docker://ghcr.io/dannixon/makerspace-spaceapi"
-
-          skopeo copy --dest-creds="dannixon:${{ github.token }}" "$local_cr" "$remote_cr:${{ github.sha }}"
-          skopeo copy --dest-creds="dannixon:${{ github.token }}" "$local_cr" "$remote_cr:latest"
+        run: nix develop --command wrangler deploy --dry-run
