@@ -1,0 +1,9 @@
+name = "makerspace-spaceapi"
+main = "build/worker/shim.mjs"
+compatibility_date = "2023-12-01"
+
+[build]
+command = "worker-build --release"
+
+[env.dev]
+build = { command = "worker-build --dev" }
