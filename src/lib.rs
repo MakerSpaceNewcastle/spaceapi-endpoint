@@ -1,5 +1,5 @@
 use spaceapi::{Contact, Link, Location, State, StatusBuilder};
-use worker::{event, Context, Env, Request, Response};
+use worker::{Context, Env, Request, Response, event};
 
 #[event(fetch)]
 async fn main(_: Request, _: Env, _: Context) -> worker::Result<Response> {
@@ -20,7 +20,7 @@ async fn main(_: Request, _: Env, _: Context) -> worker::Result<Response> {
     })
     .add_link(Link {
         name: "Maker Space Wiki".into(),
-        url: "http://makerspace.pbworks.com".into(),
+        url: "https://wiki.makerspace.org.uk".into(),
         ..Default::default()
     })
     .add_link(Link {
