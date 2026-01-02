@@ -13,13 +13,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@v17
-
-      # Evaluate the devshell here so that the time reported for subsequent
-      # steps that use it reflect what is actually done there.
-      - name: Evaluate devShell
-        run: nix develop
+      - uses: actions/checkout@v6
+      - uses: DeterminateSystems/nix-installer-action@v21
 
       - name: Format
         run: nix develop --command treefmt --fail-on-change
@@ -34,8 +29,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: DeterminateSystems/nix-installer-action@v17
+      - uses: actions/checkout@v6
+      - uses: DeterminateSystems/nix-installer-action@v21
 
       - name: Build
         run: nix develop --command wrangler deploy --dry-run
