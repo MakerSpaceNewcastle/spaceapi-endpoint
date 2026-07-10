@@ -8,5 +8,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 spaceapi = "0.9.0"
-worker = "0.7"
-worker-macros = "0.7"
+worker = "0.8"
+worker-macros = "0.8"
